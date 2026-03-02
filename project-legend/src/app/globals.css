@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --accent: #f59e0b;
+  --accent-muted: #fbbf24;
+}
+
+.dark {
+  --background: #0c1222;
+  --foreground: #f1f5f9;
+  --accent: #f59e0b;
+  --accent-muted: #fbbf24;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}

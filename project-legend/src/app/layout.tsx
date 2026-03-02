@@ -1,0 +1,65 @@
+import type { Metadata } from "next";
+import { Playfair_Display, Source_Sans_3 } from "next/font/google";
+import "./globals.css";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { Header } from "@/components/layout/Header";
+import { Footer } from "@/components/layout/Footer";
+import { ParticleBackground } from "@/components/shared/ParticleBackground";
+
+const fontHeading = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-heading",
+});
+
+const fontSans = Source_Sans_3({
+  subsets: ["latin"],
+  variable: "--font-sans",
+});
+
+export const metadata: Metadata = {
+  title: {
+    default: "H.C. Verma | Making Physics Accessible",
+    template: "%s | H.C. Verma",
+  },
+  description:
+    "Official website of physicist and author H.C. Verma. Concepts of Physics, lectures, and educational resources for JEE and competitive exams.",
+  keywords: ["H.C. Verma", "Concepts of Physics", "physics", "JEE", "IIT Kanpur", "physics education"],
+  authors: [{ name: "H.C. Verma" }],
+  openGraph: {
+    type: "website",
+    locale: "en_IN",
+    siteName: "H.C. Verma",
+    title: "H.C. Verma | Making Physics Accessible",
+    description:
+      "Official website of physicist and author H.C. Verma. Concepts of Physics, lectures, and educational resources.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "H.C. Verma | Making Physics Accessible",
+    description:
+      "Official website of physicist and author H.C. Verma. Concepts of Physics, lectures, and educational resources.",
+  },
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <body
+        className={`${fontHeading.variable} ${fontSans.variable} font-sans antialiased min-h-screen flex flex-col`}
+      >
+        <ThemeProvider>
+          <ParticleBackground />
+          <div className="relative z-10 flex flex-col min-h-screen">
+            <Header />
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </div>
+        </ThemeProvider>
+      </body>
+    </html>
+  );
+}
