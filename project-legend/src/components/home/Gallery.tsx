@@ -16,7 +16,7 @@ type GalleryItem = {
 
 const defaultGallery: GalleryItem[] = [];
 
-const container = {
+const container: any = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
@@ -24,7 +24,7 @@ const container = {
   },
 };
 
-const itemVariants = {
+const itemVariants: any = {
   hidden: { opacity: 0, scale: 0.95, y: 30 },
   show: { opacity: 1, scale: 1, y: 0, transition: { type: "spring", stiffness: 200, damping: 20 } },
 };
