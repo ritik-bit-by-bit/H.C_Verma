@@ -1,5 +1,4 @@
 import { forwardRef } from "react";
-import { motion } from "framer-motion";
 
 interface CardProps {
   children: React.ReactNode;
