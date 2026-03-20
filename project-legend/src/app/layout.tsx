@@ -1,17 +1,18 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Source_Sans_3 } from "next/font/google";
+import { Space_Grotesk, Inter } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ParticleBackground } from "@/components/shared/ParticleBackground";
+import { ScrollRocket } from "@/components/shared/ScrollRocket";
+import { IntroAnimation } from "@/components/shared/IntroAnimation";
 
-const fontHeading = Playfair_Display({
+const fontHeading = Space_Grotesk({
   subsets: ["latin"],
   variable: "--font-heading",
 });
 
-const fontSans = Source_Sans_3({
+const fontSans = Inter({
   subsets: ["latin"],
   variable: "--font-sans",
 });
@@ -51,14 +52,14 @@ export default function RootLayout({
       <body
         className={`${fontHeading.variable} ${fontSans.variable} font-sans antialiased min-h-screen flex flex-col`}
       >
-        <ThemeProvider>
+          <IntroAnimation />
           <ParticleBackground />
+          <ScrollRocket />
           <div className="relative z-10 flex flex-col min-h-screen">
             <Header />
             <main className="flex-1">{children}</main>
             <Footer />
           </div>
-        </ThemeProvider>
       </body>
     </html>
   );

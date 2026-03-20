@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useState, useEffect } from "react";
 import { getSiteApiUrl, getSiteUrl } from "@/lib/site-api";
 
@@ -16,7 +17,7 @@ const CONTENT_KEYS = [
   "lectures",
   "contactContent",
   "gallery",
-];
+] as const;
 
 const DEFAULT_HERO = {
   siteName: "H.C. Verma",
@@ -98,8 +99,8 @@ const DEFAULT_RESOURCES = [
 ];
 
 const DEFAULT_LECTURES = [
-  { id: "upcoming-1", title: "Physics Workshop", date: "TBA", venue: "IIT Kanpur", topic: "Conceptual clarity in mechanics", past: false },
-  { id: "past-1", title: "IIT Kanpur Lecture Series", date: "2024", venue: "IIT Kanpur", topic: "Teaching physics with intuition", past: true },
+  { id: "upcoming-1", title: "Physics Workshop", date: "TBA", venue: "IIT Kanpur", topic: "Conceptual clarity in mechanics", registrationLink: "", past: false },
+  { id: "past-1", title: "IIT Kanpur Lecture Series", date: "2024", venue: "IIT Kanpur", topic: "Teaching physics with intuition", registrationLink: "", past: true },
 ];
 
 const DEFAULT_CONTACT = {
@@ -148,7 +149,25 @@ const DEFAULTS = {
   gallery: DEFAULT_GALLERY,
 };
 
-function AdminSection({ title, children, id }) {
+type ContentKey = (typeof CONTENT_KEYS)[number];
+type ContentState = Record<string, any>;
+type FeaturedPublication = {
+  _id: string;
+  title: string;
+  description: string;
+  image: string;
+  link: string;
+};
+
+function AdminSection({
+  title,
+  children,
+  id,
+}: {
+  title: string;
+  children: ReactNode;
+  id: string;
+}) {
   return (
     <section
       id={id}
@@ -165,24 +184,24 @@ function AdminSection({ title, children, id }) {
 }
 
 export default function AdminPage() {
-  const [content, setContent] = useState(() => ({ ...DEFAULTS }));
-  const [featuredPubs, setFeaturedPubs] = useState([]);
+  const [content, setContent] = useState<ContentState>(() => ({ ...DEFAULTS }));
+  const [featuredPubs, setFeaturedPubs] = useState<FeaturedPublication[]>([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(null);
+  const [saving, setSaving] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState("hero");
-  const [loadError, setLoadError] = useState(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const apiBase = getSiteApiUrl();
 
   useEffect(() => {
     async function load() {
-      const results = { ...DEFAULTS };
+      const results: ContentState = { ...DEFAULTS };
       try {
         for (const key of CONTENT_KEYS) {
           try {
             const res = await fetch(`${apiBase}/api/content/${key}`);
             if (res.ok) {
               const data = await res.json();
-              if (data !== null && data !== undefined) results[key] = data;
+              if (data !== null && data !== undefined) results[key as ContentKey] = data;
             }
           } catch {
             // keep default
@@ -209,7 +228,7 @@ export default function AdminPage() {
     load();
   }, [apiBase]);
 
-  const saveContent = async (key, value) => {
+  const saveContent = async (key: ContentKey, value: any) => {
     setSaving(key);
     try {
       const res = await fetch(`${apiBase}/api/content`, {
@@ -227,7 +246,7 @@ export default function AdminPage() {
     }
   };
 
-  const saveFeaturedPub = async (body) => {
+  const saveFeaturedPub = async (body: Omit<FeaturedPublication, "_id">) => {
     setSaving("featuredPublication");
     try {
       const res = await fetch(`${apiBase}/api/setFeaturedPublication`, {
@@ -236,7 +255,7 @@ export default function AdminPage() {
         body: JSON.stringify(body),
       });
       if (res.ok) {
-        const created = await res.json();
+        const created = (await res.json()) as FeaturedPublication;
         setFeaturedPubs((prev) => [...prev, created]);
       } else alert("Failed to add");
     } finally {
@@ -244,7 +263,7 @@ export default function AdminPage() {
     }
   };
 
-  const updateFeaturedPub = async (id, body) => {
+  const updateFeaturedPub = async (id: string, body: Partial<Omit<FeaturedPublication, "_id">>) => {
     setSaving("featuredPublication");
     try {
       const res = await fetch(`${apiBase}/api/featured-publication/${id}`, {
@@ -253,7 +272,7 @@ export default function AdminPage() {
         body: JSON.stringify(body),
       });
       if (res.ok) {
-        const updated = await res.json();
+        const updated = (await res.json()) as FeaturedPublication;
         setFeaturedPubs((prev) => prev.map((p) => (p._id === id ? updated : p)));
       }
     } finally {
@@ -261,7 +280,7 @@ export default function AdminPage() {
     }
   };
 
-  const deleteFeaturedPub = async (id) => {
+  const deleteFeaturedPub = async (id: string) => {
     if (!confirm("Delete this featured publication?")) return;
     try {
       const res = await fetch(`${apiBase}/api/featured-publication/${id}`, { method: "DELETE" });
@@ -292,10 +311,10 @@ export default function AdminPage() {
   const contactContent = content.contactContent || DEFAULT_CONTACT;
   const gallery = content.gallery || DEFAULT_GALLERY;
 
-  const updateFeatureCardField = (index, field, value) => {
+  const updateFeatureCardField = (index: number, field: string, value: any) => {
     setContent((prev) => {
       const existing = Array.isArray(prev.featureCards) ? prev.featureCards : DEFAULT_FEATURE_CARDS;
-      const next = existing.map((card, i) =>
+      const next = existing.map((card: any, i: number) =>
         i === index ? { ...card, [field]: value } : card
       );
       return { ...prev, featureCards: next };
@@ -313,18 +332,18 @@ export default function AdminPage() {
     });
   };
 
-  const removeFeatureCard = (index) => {
+  const removeFeatureCard = (index: number) => {
     setContent((prev) => {
       const existing = Array.isArray(prev.featureCards) ? prev.featureCards : DEFAULT_FEATURE_CARDS;
-      const next = existing.filter((_, i) => i !== index);
+      const next = existing.filter((_: any, i: number) => i !== index);
       return { ...prev, featureCards: next };
     });
   };
 
-  const updateNavLinkField = (index, field, value) => {
+  const updateNavLinkField = (index: number, field: string, value: any) => {
     setContent((prev) => {
       const existing = Array.isArray(prev.navLinks) ? prev.navLinks : DEFAULT_NAV_LINKS;
-      const next = existing.map((link, i) =>
+      const next = existing.map((link: any, i: number) =>
         i === index ? { ...link, [field]: value } : link
       );
       return { ...prev, navLinks: next };
@@ -342,19 +361,19 @@ export default function AdminPage() {
     });
   };
 
-  const removeNavLink = (index) => {
+  const removeNavLink = (index: number) => {
     setContent((prev) => {
       const existing = Array.isArray(prev.navLinks) ? prev.navLinks : DEFAULT_NAV_LINKS;
-      const next = existing.filter((_, i) => i !== index);
+      const next = existing.filter((_: any, i: number) => i !== index);
       return { ...prev, navLinks: next };
     });
   };
 
-  const updateFooterLinkField = (index, field, value) => {
+  const updateFooterLinkField = (index: number, field: string, value: any) => {
     setContent((prev) => {
       const existingFooter = prev.footer || DEFAULT_FOOTER;
       const existingLinks = Array.isArray(existingFooter.links) ? existingFooter.links : DEFAULT_FOOTER.links;
-      const nextLinks = existingLinks.map((link, i) =>
+      const nextLinks = existingLinks.map((link: any, i: number) =>
         i === index ? { ...link, [field]: value } : link
       );
       return { ...prev, footer: { ...existingFooter, links: nextLinks } };
@@ -370,23 +389,23 @@ export default function AdminPage() {
     });
   };
 
-  const removeFooterLink = (index) => {
+  const removeFooterLink = (index: number) => {
     setContent((prev) => {
       const existingFooter = prev.footer || DEFAULT_FOOTER;
       const existingLinks = Array.isArray(existingFooter.links) ? existingFooter.links : DEFAULT_FOOTER.links;
-      const nextLinks = existingLinks.filter((_, i) => i !== index);
+      const nextLinks = existingLinks.filter((_: any, i: number) => i !== index);
       return { ...prev, footer: { ...existingFooter, links: nextLinks } };
     });
   };
 
-  const updateAboutField = (field, value) => {
+  const updateAboutField = (field: string, value: any) => {
     setContent((prev) => {
       const existing = prev.about || DEFAULT_ABOUT;
       return { ...prev, about: { ...existing, [field]: value } };
     });
   };
 
-  const updateAboutBio = (value) => {
+  const updateAboutBio = (value: string) => {
     const paragraphs = value.split("\n").map((p) => p.trim()).filter(Boolean);
     setContent((prev) => {
       const existing = prev.about || DEFAULT_ABOUT;
@@ -394,13 +413,13 @@ export default function AdminPage() {
     });
   };
 
-  const updateAboutAchievementField = (index, field, value) => {
+  const updateAboutAchievementField = (index: number, field: string, value: any) => {
     setContent((prev) => {
       const existing = prev.about || DEFAULT_ABOUT;
       const achievements = Array.isArray(existing.achievements)
         ? existing.achievements
         : DEFAULT_ABOUT.achievements;
-      const next = achievements.map((a, i) =>
+      const next = achievements.map((a: any, i: number) =>
         i === index ? { ...a, [field]: value } : a
       );
       return { ...prev, about: { ...existing, achievements: next } };
@@ -418,21 +437,21 @@ export default function AdminPage() {
     });
   };
 
-  const removeAboutAchievement = (index) => {
+  const removeAboutAchievement = (index: number) => {
     setContent((prev) => {
       const existing = prev.about || DEFAULT_ABOUT;
       const achievements = Array.isArray(existing.achievements)
         ? existing.achievements
         : DEFAULT_ABOUT.achievements;
-      const next = achievements.filter((_, i) => i !== index);
+      const next = achievements.filter((_: any, i: number) => i !== index);
       return { ...prev, about: { ...existing, achievements: next } };
     });
   };
 
-  const updateConceptField = (index, field, value) => {
+  const updateConceptField = (index: number, field: string, value: any) => {
     setContent((prev) => {
       const existing = Array.isArray(prev.concepts) ? prev.concepts : DEFAULT_CONCEPTS;
-      const next = existing.map((c, i) =>
+      const next = existing.map((c: any, i: number) =>
         i === index ? { ...c, [field]: value } : c
       );
       return { ...prev, concepts: next };
@@ -450,18 +469,18 @@ export default function AdminPage() {
     });
   };
 
-  const removeConcept = (index) => {
+  const removeConcept = (index: number) => {
     setContent((prev) => {
       const existing = Array.isArray(prev.concepts) ? prev.concepts : DEFAULT_CONCEPTS;
-      const next = existing.filter((_, i) => i !== index);
+      const next = existing.filter((_: any, i: number) => i !== index);
       return { ...prev, concepts: next };
     });
   };
 
-  const updateResourceField = (index, field, value) => {
+  const updateResourceField = (index: number, field: string, value: any) => {
     setContent((prev) => {
       const existing = Array.isArray(prev.resources) ? prev.resources : DEFAULT_RESOURCES;
-      const next = existing.map((r, i) =>
+      const next = existing.map((r: any, i: number) =>
         i === index ? { ...r, [field]: value } : r
       );
       return { ...prev, resources: next };
@@ -479,18 +498,18 @@ export default function AdminPage() {
     });
   };
 
-  const removeResource = (index) => {
+  const removeResource = (index: number) => {
     setContent((prev) => {
       const existing = Array.isArray(prev.resources) ? prev.resources : DEFAULT_RESOURCES;
-      const next = existing.filter((_, i) => i !== index);
+      const next = existing.filter((_: any, i: number) => i !== index);
       return { ...prev, resources: next };
     });
   };
 
-  const updateLectureField = (index, field, value) => {
+  const updateLectureField = (index: number, field: string, value: any) => {
     setContent((prev) => {
       const existing = Array.isArray(prev.lectures) ? prev.lectures : DEFAULT_LECTURES;
-      const next = existing.map((l, i) =>
+      const next = existing.map((l: any, i: number) =>
         i === index ? { ...l, [field]: value } : l
       );
       return { ...prev, lectures: next };
@@ -508,18 +527,18 @@ export default function AdminPage() {
     });
   };
 
-  const removeLecture = (index) => {
+  const removeLecture = (index: number) => {
     setContent((prev) => {
       const existing = Array.isArray(prev.lectures) ? prev.lectures : DEFAULT_LECTURES;
-      const next = existing.filter((_, i) => i !== index);
+      const next = existing.filter((_: any, i: number) => i !== index);
       return { ...prev, lectures: next };
     });
   };
 
-  const updateGalleryField = (index, field, value) => {
+  const updateGalleryField = (index: number, field: string, value: any) => {
     setContent((prev) => {
       const existing = Array.isArray(prev.gallery) ? prev.gallery : DEFAULT_GALLERY;
-      const next = existing.map((g, i) =>
+      const next = existing.map((g: any, i: number) =>
         i === index ? { ...g, [field]: value } : g
       );
       return { ...prev, gallery: next };
@@ -537,18 +556,18 @@ export default function AdminPage() {
     });
   };
 
-  const removeGalleryItem = (index) => {
+  const removeGalleryItem = (index: number) => {
     setContent((prev) => {
       const existing = Array.isArray(prev.gallery) ? prev.gallery : DEFAULT_GALLERY;
-      const next = existing.filter((_, i) => i !== index);
+      const next = existing.filter((_: any, i: number) => i !== index);
       return { ...prev, gallery: next };
     });
   };
 
-  const updateBookField = (index, field, value) => {
+  const updateBookField = (index: number, field: string, value: any) => {
     setContent((prev) => {
       const existing = Array.isArray(prev.books) ? prev.books : DEFAULT_BOOKS;
-      const next = existing.map((b, i) =>
+      const next = existing.map((b: any, i: number) =>
         i === index ? { ...b, [field]: value } : b
       );
       return { ...prev, books: next };
@@ -573,10 +592,10 @@ export default function AdminPage() {
     });
   };
 
-  const removeBook = (index) => {
+  const removeBook = (index: number) => {
     setContent((prev) => {
       const existing = Array.isArray(prev.books) ? prev.books : DEFAULT_BOOKS;
-      const next = existing.filter((_, i) => i !== index);
+      const next = existing.filter((_: any, i: number) => i !== index);
       return { ...prev, books: next };
     });
   };
@@ -865,7 +884,7 @@ export default function AdminPage() {
                   Footer links
                 </p>
                 <div className="space-y-2">
-                  {(Array.isArray(footer.links) ? footer.links : []).map((link, index) => (
+                  {(Array.isArray(footer.links) ? footer.links : []).map((link: any, index: number) => (
                     <div
                       key={`${link.href || "footer"}-${index}`}
                       className="flex flex-col gap-2 rounded-xl border border-white/50 bg-white/50 p-3 text-sm shadow-sm backdrop-blur-md md:flex-row md:items-center"
@@ -953,7 +972,7 @@ export default function AdminPage() {
                 <p className={labelClass}>Achievements</p>
                 <div className="space-y-2">
                   {(Array.isArray(about.achievements) ? about.achievements : []).map(
-                    (ach, index) => (
+                    (ach: any, index: number) => (
                       <div
                         key={`${ach.title || "ach"}-${index}`}
                         className="rounded-xl border border-white/50 bg-white/50 p-3 shadow-sm backdrop-blur-md"
@@ -1633,13 +1652,19 @@ export default function AdminPage() {
   );
 }
 
-function AddFeaturedPubForm({ onAdd, saving }) {
+function AddFeaturedPubForm({
+  onAdd,
+  saving,
+}: {
+  onAdd: (body: Omit<FeaturedPublication, "_id">) => void | Promise<void>;
+  saving: boolean;
+}) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [image, setImage] = useState("");
   const [link, setLink] = useState("");
   const inputClass = "w-full px-3 py-2 rounded-lg border border-slate-200 bg-white/90 text-slate-900 mb-2";
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     onAdd({ title, description, image, link });
     setTitle(""); setDescription(""); setImage(""); setLink("");

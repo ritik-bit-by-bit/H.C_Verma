@@ -10,18 +10,15 @@ interface ButtonBaseProps {
   size?: "sm" | "md" | "lg";
 }
 
-const variantStyles: Record<
-  ButtonVariant,
-  string
-> = {
+const variantStyles: Record<ButtonVariant, string> = {
   primary:
-    "bg-amber-500 text-slate-900 hover:bg-amber-400 focus:ring-amber-500/50",
+    "bg-accent text-white shadow-glow hover:bg-accent-muted focus:ring-accent/50",
   secondary:
-    "bg-slate-700/50 text-foreground hover:bg-slate-600/50 focus:ring-slate-500/50 dark:bg-slate-600/30 dark:hover:bg-slate-500/40",
+    "bg-white/40 text-foreground backdrop-blur-md border border-white/60 hover:bg-white/60 focus:ring-accent/50",
   ghost:
-    "bg-transparent text-foreground hover:bg-foreground/10 focus:ring-foreground/20",
+    "bg-transparent text-foreground hover:bg-white/40 hover:backdrop-blur-md focus:ring-accent/20",
   outline:
-    "border-2 border-amber-500/70 text-amber-500 hover:bg-amber-500/10 focus:ring-amber-500/50",
+    "border-2 border-accent/70 text-accent bg-accent/5 hover:bg-accent/10 focus:ring-accent/50",
 };
 
 const sizeStyles = {
@@ -39,31 +36,17 @@ interface ButtonProps extends ButtonBaseProps {
 
 export const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonProps>(
   function Button(
-    {
-      variant = "primary",
-      size = "md",
-      className = "",
-      children,
-      href,
-      type = "button",
-      onClick,
-      disabled,
-      ...rest
-    },
+    { variant = "primary", size = "md", className = "", children, href, type = "button", onClick, disabled, ...rest },
     ref
   ) {
     const baseStyles =
-      "inline-flex items-center justify-center font-medium rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed";
+      "inline-flex items-center justify-center font-medium rounded-xl transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed";
 
     const combinedClassName = `${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${className}`;
 
     if (href) {
       return (
-        <Link
-          href={href}
-          className={combinedClassName}
-          ref={ref as React.Ref<HTMLAnchorElement>}
-        >
+        <Link href={href} className={combinedClassName} ref={ref as React.Ref<HTMLAnchorElement>}>
           {children}
         </Link>
       );

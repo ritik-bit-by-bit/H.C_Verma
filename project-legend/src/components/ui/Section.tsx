@@ -1,3 +1,7 @@
+"use client";
+
+import { motion } from "framer-motion";
+
 interface SectionProps {
   children: React.ReactNode;
   className?: string;
@@ -16,22 +20,30 @@ export function Section({
   return (
     <section
       id={id}
-      className={`py-16 md:py-24 ${className}`}
+      className={`py-20 md:py-32 relative ${className}`}
     >
-      <div className="container mx-auto px-4 md:px-6 max-w-6xl">
+      <div className="container mx-auto px-6 max-w-6xl relative z-10">
         {(title || subtitle) && (
-          <div className="mb-12 text-center">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6 }}
+            className="mb-16 flex flex-col items-center text-center"
+          >
             {title && (
-              <h2 className="font-heading text-3xl md:text-4xl font-bold text-foreground mb-4">
+              <h2 className="font-heading text-4xl md:text-5xl font-bold text-foreground mb-4 tracking-tight flex items-center gap-4">
+                <span className="h-px w-8 bg-accent/50 hidden md:block"></span>
                 {title}
+                <span className="h-px w-8 bg-accent/50 hidden md:block"></span>
               </h2>
             )}
             {subtitle && (
-              <p className="text-lg text-foreground/70 max-w-2xl mx-auto">
+              <p className="text-lg text-foreground/60 max-w-2xl mx-auto font-light leading-relaxed">
                 {subtitle}
               </p>
             )}
-          </div>
+          </motion.div>
         )}
         {children}
       </div>

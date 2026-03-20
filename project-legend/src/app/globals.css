@@ -3,23 +3,100 @@
 @tailwind utilities;
 
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
-  --accent: #f59e0b;
-  --accent-muted: #fbbf24;
+  --background: #f8fbff;
+  --foreground: #090e17;
+  --accent: #0ea5e9;
+  --accent-muted: #38bdf8;
+  --accent-glow: rgba(14, 165, 233, 0.3);
 }
 
-.dark {
-  --background: #0c1222;
-  --foreground: #f1f5f9;
-  --accent: #f59e0b;
-  --accent-muted: #fbbf24;
-}
 
 body {
   color: var(--foreground);
   background: var(--background);
   font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/* Project Legend loader */
+.pl-loader {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  width: 210px;
+  height: 210px;
+  animation: pl-pulse 2s infinite ease-in-out;
+}
+
+.pl-loader__nucleus {
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: var(--foreground);
+  opacity: 0.9;
+  box-shadow: 0 0 18px rgba(245, 158, 11, 0.35);
+}
+
+.pl-loader__ring {
+  position: absolute;
+  width: 190px;
+  height: 190px;
+  border: 8px solid transparent;
+  border-radius: 50%;
+  --color: #fe53bb;
+  border-bottom-color: var(--color);
+  animation: pl-rotate 1s ease-in-out infinite;
+  box-shadow: 0 0 4px #8e8e8e;
+}
+
+.pl-loader__ring:nth-of-type(2) {
+  --color: #09fbd3;
+  transform: rotate(60deg);
+  animation-duration: 1.15s;
+}
+.pl-loader__ring:nth-of-type(3) {
+  --color: #f5d300;
+  transform: rotate(120deg);
+  animation-duration: 1.3s;
+}
+.pl-loader__ring:nth-of-type(4) {
+  --color: #8f00ff;
+  transform: rotate(180deg);
+  animation-duration: 1.45s;
+}
+.pl-loader__ring:nth-of-type(5) {
+  --color: #fe53bb;
+  transform: rotate(240deg);
+  animation-duration: 1.6s;
+}
+.pl-loader__ring:nth-of-type(6) {
+  --color: #09fbd3;
+  transform: rotate(300deg);
+  animation-duration: 1.75s;
+}
+
+@keyframes pl-rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(180deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pl-pulse {
+  0%,
+  100% {
+    transform: scale(0.98);
+    opacity: 0.95;
+  }
+  50% {
+    transform: scale(1.02);
+    opacity: 1;
+  }
 }
 
 @layer utilities {

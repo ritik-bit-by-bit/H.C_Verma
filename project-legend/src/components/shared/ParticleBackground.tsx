@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { motion } from "framer-motion";
 
 export function ParticleBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -13,42 +14,85 @@ export function ParticleBackground() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    let time = 0;
+    const DOT_COLOR = "rgba(14, 165, 233, 0.6)";
+    const MAX_PARTICLES = 100; // Slightly fewer if bigger
+    const MAX_DISTANCE = 160;
+    const BASE_RADIUS = 3.5;
+
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+
+    class Particle {
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      radius: number;
+
+      constructor() {
+        this.x = Math.random() * width;
+        this.y = Math.random() * height;
+        this.vx = (Math.random() - 0.5) * 0.8;
+        this.vy = (Math.random() - 0.5) * 0.8;
+        this.radius = Math.random() * BASE_RADIUS + 0.5;
+      }
+
+      update() {
+        if (this.x < 0 || this.x > width) this.vx *= -1;
+        if (this.y < 0 || this.y > height) this.vy *= -1;
+        this.x += this.vx;
+        this.y += this.vy;
+      }
+
+      draw(context: CanvasRenderingContext2D) {
+        context.beginPath();
+        context.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        context.fillStyle = DOT_COLOR;
+        context.fill();
+      }
+    }
+
+    let particles: Particle[] = [];
+    for (let i = 0; i < MAX_PARTICLES; i++) {
+      particles.push(new Particle());
+    }
 
     const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
+      particles = [];
+      for (let i = 0; i < MAX_PARTICLES; i++) {
+        particles.push(new Particle());
+      }
     };
 
     const draw = () => {
-      const width = canvas.width;
-      const height = canvas.height;
-
       ctx.clearRect(0, 0, width, height);
 
-      const isDark =
-        document.documentElement.classList.contains("dark") ||
-        (!document.documentElement.classList.contains("light") &&
-          window.matchMedia("(prefers-color-scheme: dark)").matches);
+      // Draw particles and connections
+      for (let i = 0; i < particles.length; i++) {
+        particles[i].update();
+        particles[i].draw(ctx);
 
-      const dotColor = isDark ? "rgba(251, 191, 36, 0.12)" : "rgba(180, 83, 9, 0.1)";
-      const spacing = 48;
-      const dotRadius = 1;
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
 
-      ctx.fillStyle = dotColor;
-
-      for (let x = 0; x < width; x += spacing) {
-        for (let y = 0; y < height; y += spacing) {
-          const offsetX = (x + y) % (spacing * 2) === 0 ? spacing / 2 : 0;
-          const pulse = 0.7 + 0.3 * Math.sin(time * 0.002 + x * 0.02 + y * 0.02);
-          ctx.globalAlpha = pulse;
-          ctx.beginPath();
-          ctx.arc(x + offsetX, y, dotRadius, 0, Math.PI * 2);
-          ctx.fill();
+          if (dist < MAX_DISTANCE) {
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            // Opacity scales with distance
+            const opacity = 1 - dist / MAX_DISTANCE;
+            ctx.strokeStyle = `rgba(14, 165, 233, ${opacity * 0.35})`;
+            ctx.lineWidth = 2.0;
+            ctx.stroke();
+          }
         }
       }
-      ctx.globalAlpha = 1;
-      time += 16;
     };
 
     const loop = () => {
@@ -60,24 +104,25 @@ export function ParticleBackground() {
     window.addEventListener("resize", resize);
     animationRef.current = requestAnimationFrame(loop);
 
-    const observer = new MutationObserver(() => draw());
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["class"],
-    });
-
     return () => {
       window.removeEventListener("resize", resize);
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
-      observer.disconnect();
     };
   }, []);
 
   return (
-    <canvas
-      ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-0"
-      aria-hidden
-    />
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 2 }}
+    >
+      <canvas
+        ref={canvasRef}
+        className="fixed inset-0 pointer-events-none z-0 mix-blend-multiply"
+        aria-hidden
+      />
+      {/* Soft gradient overlay for depth */}
+      <div className="fixed inset-0 pointer-events-none z-0 bg-gradient-to-bp from-white/30 to-background/90 mix-blend-overlay" />
+    </motion.div>
   );
 }

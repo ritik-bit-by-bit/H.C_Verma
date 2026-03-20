@@ -1,4 +1,5 @@
 import { forwardRef } from "react";
+import { motion } from "framer-motion";
 
 interface CardProps {
   children: React.ReactNode;
@@ -14,13 +15,14 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(function Card(
   return (
     <Component
       ref={ref}
-      className={`rounded-xl border border-slate-300 dark:border-slate-700/50 bg-slate-50/80 dark:bg-slate-800/30 backdrop-blur-sm p-6 transition-all duration-300 ${
+      className={`relative overflow-hidden rounded-2xl border border-white/60 bg-white/40 backdrop-blur-xl p-6 transition-all duration-300 shadow-glass ${
         hover
-          ? "hover:border-amber-500/50 dark:hover:border-amber-500/30 hover:shadow-lg hover:shadow-amber-500/5"
+          ? "hover:border-accent/40 hover:shadow-glass-hover hover:-translate-y-1"
           : ""
       } ${className}`}
     >
-      {children}
+      <div className="absolute inset-0 bg-glass-gradient opacity-50 pointer-events-none" />
+      <div className="relative z-10">{children}</div>
     </Component>
   );
 });
