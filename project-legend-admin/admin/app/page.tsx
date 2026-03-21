@@ -184,6 +184,16 @@ function AdminSection({
 }
 
 export default function AdminPage() {
+  // --- AUTH STATES ---
+  const [authStatus, setAuthStatus] = useState<"loading" | "authenticated" | "unauthenticated">("loading");
+  const [authMode, setAuthMode] = useState<"login" | "signup" | "otp">("login");
+  const [authEmail, setAuthEmail] = useState("");
+  const [otpCode, setOtpCode] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [isAuthLoading, setIsAuthLoading] = useState(false);
+  const [otpType, setOtpType] = useState<"signup" | "login">("login");
+
+  // --- CONTENT STATES ---
   const [content, setContent] = useState<ContentState>(() => ({ ...DEFAULTS }));
   const [featuredPubs, setFeaturedPubs] = useState<FeaturedPublication[]>([]);
   const [loading, setLoading] = useState(true);
@@ -192,7 +202,24 @@ export default function AdminPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const apiBase = getSiteApiUrl();
 
+  // 1. Verify Session Cookie on Mount
   useEffect(() => {
+    async function checkSession() {
+      try {
+        const res = await fetch(`/api/auth/me`);
+        if (res.ok) setAuthStatus("authenticated");
+        else setAuthStatus("unauthenticated");
+      } catch (e) {
+        setAuthStatus("unauthenticated");
+      }
+    }
+    checkSession();
+  }, []);
+
+  // 2. Load Content Database Securely once Authenticated
+  useEffect(() => {
+    if (authStatus !== "authenticated") return;
+
     async function load() {
       const results: ContentState = { ...DEFAULTS };
       try {
@@ -226,7 +253,7 @@ export default function AdminPage() {
       }
     }
     load();
-  }, [apiBase]);
+  }, [apiBase, authStatus]);
 
   const saveContent = async (key: ContentKey, value: any) => {
     setSaving(key);
@@ -290,10 +317,115 @@ export default function AdminPage() {
     }
   };
 
-  if (loading) {
+  // --- AUTH UI HANDLERS ---
+  const handleSendOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsAuthLoading(true);
+    setAuthError("");
+    try {
+      const res = await fetch("/api/auth/send-otp", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: authEmail, type: authMode })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to send OTP");
+      setOtpType(authMode as "signup" | "login");
+      setAuthMode("otp");
+    } catch (err: any) {
+      setAuthError(err.message);
+    } finally {
+      setIsAuthLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsAuthLoading(true);
+    setAuthError("");
+    try {
+      const res = await fetch("/api/auth/verify", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: authEmail, otp: otpCode, type: otpType })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Invalid OTP");
+      setAuthStatus("authenticated");
+    } catch (err: any) {
+      setAuthError(err.message);
+    } finally {
+      setIsAuthLoading(false);
+    }
+  };
+
+  if (authStatus === "loading" || (authStatus === "authenticated" && loading)) {
     return (
-      <div className="container mx-auto px-4 py-12 max-w-4xl bg-white/50 min-h-[60vh] backdrop-blur-sm">
-        <p className="text-slate-600">Loading admin...</p>
+      <div className="container mx-auto px-4 py-12 max-w-4xl flex items-center justify-center min-h-[60vh]">
+        <div className="w-12 h-12 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (authStatus === "unauthenticated") {
+    return (
+      <div className="container mx-auto px-4 py-12 flex items-center justify-center min-h-[80vh]">
+        <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl shadow-xl p-8">
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 mb-2">H.C. Verma Admin</h1>
+            <p className="text-sm text-slate-500">
+              {authMode === "otp" ? "Enter verification code" : authMode === "login" ? "Welcome back" : "Request access"}
+            </p>
+          </div>
+          
+          {authError && (
+            <div className="mb-6 p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100 text-center">
+              {authError}
+            </div>
+          )}
+
+          {authMode !== "otp" ? (
+            <form onSubmit={handleSendOtp} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Email Address</label>
+                <input required type="email" value={authEmail} onChange={e => setAuthEmail(e.target.value)}
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-800 focus:outline-none"
+                  placeholder="admin@example.com" />
+              </div>
+              <button disabled={isAuthLoading} type="submit" 
+                className="w-full bg-slate-900 text-white font-medium py-2 rounded-lg hover:bg-slate-800 transition disabled:opacity-50">
+                {isAuthLoading ? "Sending..." : "Continue with Email"}
+              </button>
+              
+              <div className="text-center pt-4">
+                <button type="button" onClick={() => { setAuthMode(authMode === "login" ? "signup" : "login"); setAuthError(""); }} 
+                  className="text-sm text-slate-600 hover:text-slate-900 font-medium">
+                  {authMode === "login" ? "Need an account? Sign up" : "Already registered? Log in"}
+                </button>
+              </div>
+            </form>
+          ) : (
+            <form onSubmit={handleVerifyOtp} className="space-y-4">
+              <p className="text-sm text-slate-600 text-center mb-4 leading-relaxed">
+                {otpType === "signup" ? "To complete signup, you must obtain the 6-digit access code from the master admin. We have sent the request to them." : `We sent a 6-digit code to ${authEmail}.`}
+              </p>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Verification Code</label>
+                <input required type="text" value={otpCode} onChange={e => setOtpCode(e.target.value)} maxLength={6}
+                  className="w-full px-4 py-3 text-center text-2xl tracking-[0.5em] border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-800 focus:outline-none"
+                  placeholder="000000" />
+              </div>
+              <button disabled={isAuthLoading || otpCode.length < 6} type="submit" 
+                className="w-full bg-slate-900 text-white font-medium py-3 rounded-lg hover:bg-slate-800 transition disabled:opacity-50 mt-2">
+                {isAuthLoading ? "Verifying..." : "Verify & Enter"}
+              </button>
+              <div className="text-center pt-4">
+                <button type="button" onClick={() => { setAuthMode(otpType); setOtpCode(""); setAuthError(""); }} 
+                  className="text-sm text-slate-500 hover:text-slate-800">
+                  ← Back to Email
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
       </div>
     );
   }
